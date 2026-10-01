@@ -180,7 +180,7 @@
           </div>
         </div>
         <div class="column-right">
-          <div style="font-size: 30px; font-weight: bold; color: var(--primary-dark); text-align: center;">請看左側九宮格，照筆順數字描寫</div>
+          <div style="font-size: 30px; font-weight: bold; color: var(--primary-dark); text-align: center;">請看左側九宮格描寫</div>
         </div>
       </div>
 
@@ -288,11 +288,12 @@
       }
     }
 
+    // 傳送小寫字母，徹底防止 iOS TTS 觸發 Capital/Letter 提示詞
     function speakCurrentLetter() { 
-      speakText(`${alphabetData[currentIndex].upper}`); 
+      speakText(alphabetData[currentIndex].lower); 
     }
 
-    // 解決連在一起問題：單字與例句之間強制加入 0.6 秒停頓
+    // 強制在單字與例句之間停頓 0.6 秒
     function speakCurrentWord() { 
       if ('speechSynthesis' in window) {
         window.speechSynthesis.cancel();
@@ -323,7 +324,7 @@
       if(tabId === 'quiz') setupQuiz();
     }
 
-    // Canvas (帶九宮格與練習輔助)
+    // Canvas
     let canvas, ctx, isDrawing = false;
     function initCanvas() {
       canvas = document.getElementById('writeCanvas');
@@ -343,7 +344,7 @@
       if(!ctx) return;
       ctx.clearRect(0,0,canvas.width,canvas.height);
       
-      // 繪製九宮格/米字虛線
+      // 繪製九宮格虛線
       ctx.strokeStyle = '#a4b0be';
       ctx.lineWidth = 1.5;
       ctx.setLineDash([6, 6]);
@@ -396,7 +397,7 @@
       playQuizSound();
     }
 
-    function playQuizSound() { speakText(alphabetData[quizTargetIndex].upper); }
+    function playQuizSound() { speakText(alphabetData[quizTargetIndex].lower); }
 
     function checkQuiz(selectedIdx) {
       const fb = document.getElementById('quizFeedback');
