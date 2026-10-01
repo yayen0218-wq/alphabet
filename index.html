@@ -100,7 +100,7 @@
     .overview-card:active { background: #eef5fc; border-color: var(--primary); }
     .overview-letter { font-size: 36px; font-weight: bold; color: var(--primary-dark); }
 
-    .canvas-wrapper { position: relative; width: 320px; height: 320px; }
+    .canvas-wrapper { position: relative; width: 340px; height: 340px; }
     canvas {
       background: white; border: 3px solid var(--border-color);
       border-radius: 20px; touch-action: none;
@@ -171,16 +171,16 @@
       <div class="landscape-container">
         <div class="column-left">
           <div class="canvas-wrapper">
-            <canvas id="writeCanvas" width="320" height="320"></canvas>
+            <canvas id="writeCanvas" width="340" height="340"></canvas>
           </div>
           <div class="canvas-tools">
-            <button class="tool-btn" onclick="clearCanvas()">🗑️️ 重寫</button>
+            <button class="tool-btn" onclick="clearCanvas()">🗑 重寫</button>
             <button class="tool-btn" onclick="toggleCase()" id="caseBtn" style="background: var(--accent); color: white;">切換大小寫</button>
             <button class="tool-btn" onclick="speakCurrentLetter()" style="background: var(--primary); color: white;">🔊 聽發音</button>
           </div>
         </div>
         <div class="column-right">
-          <div style="font-size: 32px; font-weight: bold; color: var(--primary-dark);">請看左邊灰字，直接跟著描寫</div>
+          <div style="font-size: 30px; font-weight: bold; color: var(--primary-dark); text-align: center;">請看左側九宮格，照筆順數字描寫</div>
         </div>
       </div>
 
@@ -201,7 +201,6 @@
   </main>
 
   <script>
-    // 完整 26 個字母資料庫 (A-Z)
     const alphabetData = [
       { upper: 'A', lower: 'a', word: 'Apple', icon: '🍎', meaning: '蘋果', sentence: 'An apple a day.' },
       { upper: 'B', lower: 'b', word: 'Boy', icon: '👦', meaning: '男孩', sentence: 'A happy boy.' },
@@ -279,24 +278,34 @@
       switchTab('flashcard');
     }
 
-    // 發音優化：精準只發字母音，無任何贅字
     function speakText(text) {
       if ('speechSynthesis' in window) {
         window.speechSynthesis.cancel();
         const u = new SpeechSynthesisUtterance(text);
         u.lang = 'en-US';
-        u.rate = 0.6;
+        u.rate = 0.55;
         window.speechSynthesis.speak(u);
       }
     }
 
     function speakCurrentLetter() { 
-      // 加句號過濾，確保語音引擎精準發出字母讀音
-      speakText(`${alphabetData[currentIndex].upper}.`); 
+      speakText(`${alphabetData[currentIndex].upper}`); 
     }
 
+    // 解決連在一起問題：單字與例句之間強制加入 0.6 秒停頓
     function speakCurrentWord() { 
-      speakText(`${alphabetData[currentIndex].word}. ${alphabetData[currentIndex].sentence}`); 
+      if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+        const u1 = new SpeechSynthesisUtterance(alphabetData[currentIndex].word);
+        u1.lang = 'en-US'; u1.rate = 0.55;
+        const u2 = new SpeechSynthesisUtterance(alphabetData[currentIndex].sentence);
+        u2.lang = 'en-US'; u2.rate = 0.55;
+
+        window.speechSynthesis.speak(u1);
+        u1.onend = () => {
+          setTimeout(() => { window.speechSynthesis.speak(u2); }, 600);
+        };
+      }
     }
 
     function nextLetter() { currentIndex = (currentIndex + 1) % alphabetData.length; updateCard(); }
@@ -314,7 +323,7 @@
       if(tabId === 'quiz') setupQuiz();
     }
 
-    // Canvas
+    // Canvas (帶九宮格與練習輔助)
     let canvas, ctx, isDrawing = false;
     function initCanvas() {
       canvas = document.getElementById('writeCanvas');
@@ -333,11 +342,22 @@
     function drawCanvasBg() {
       if(!ctx) return;
       ctx.clearRect(0,0,canvas.width,canvas.height);
+      
+      // 繪製九宮格/米字虛線
+      ctx.strokeStyle = '#a4b0be';
+      ctx.lineWidth = 1.5;
+      ctx.setLineDash([6, 6]);
+      ctx.beginPath();
+      ctx.moveTo(canvas.width / 2, 0); ctx.lineTo(canvas.width / 2, canvas.height);
+      ctx.moveTo(0, canvas.height / 2); ctx.lineTo(canvas.width, canvas.height / 2);
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      // 繪製底字
       ctx.font = 'bold 220px sans-serif';
-      ctx.fillStyle = '#e2e8f0';
+      ctx.fillStyle = '#dcdde1';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      
       const charToDraw = isUpper ? alphabetData[currentIndex].upper : alphabetData[currentIndex].lower;
       ctx.fillText(charToDraw, canvas.width/2, canvas.height/2);
     }
@@ -376,7 +396,7 @@
       playQuizSound();
     }
 
-    function playQuizSound() { speakText(`${alphabetData[quizTargetIndex].upper}.`); }
+    function playQuizSound() { speakText(alphabetData[quizTargetIndex].upper); }
 
     function checkQuiz(selectedIdx) {
       const fb = document.getElementById('quizFeedback');
